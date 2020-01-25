@@ -72,6 +72,8 @@ Under Microsoft Windows, launching an interactive shell with the git-bash interp
         (shell)))
 ```
 
+For more practical examples, have a look at packages in [prf-shell](https://github.com/p3r7/prf-shell).
+
 
 ## Configuration
 

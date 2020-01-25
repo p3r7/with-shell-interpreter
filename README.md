@@ -89,6 +89,8 @@ Furthermore, under Microsoft Windows, `shell-file-name` defaults to _cmdproxy.ex
 
 These values can be overriden with keyword arguments _:interpreter_, _:interpreter-args_ and _:command-switch_ respectively.
 
+Additionally, you might want to change the value of `tramp-default-user` if you usually connect to remote host with a user different than your local one.
+
 
 ## Legibility
 

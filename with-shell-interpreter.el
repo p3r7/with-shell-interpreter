@@ -100,26 +100,22 @@ this file.  Usage:
          (command-switch (or command-switch
                              (if is-remote
                                  default-remote-shell-interpreter-command-swith
-                               shell-command-switch))))
-
-    ;; REVIEW: used to use `with-temp-buffer' alongside `cd'
-    ;; might not be necessary now
-    (with-temp-buffer
-      ;; (cd path)
-      (let ((default-directory path)
-            (shell-file-name interpreter)
-            (explicit-shell-file-name interpreter)
-            (shell-command-switch command-switch)
-            ;; NB: w32-only feature
-            (w32-quote-process-args (or w32-arg-quote
-                                        (when (boundp 'w32-quote-process-args)
-                                          w32-quote-process-args))))
-        (cl-progv
-            (list explicit-interpreter-args-var)
-            (list (or interpreter-args
-                      (when (boundp explicit-interpreter-args-var)
-                        (symbol-value explicit-interpreter-args-var))))
-          (funcall func))))))
+                               shell-command-switch)))
+         ;; bellow are vars acting as implicit options to shell functions
+         (default-directory path)
+         (shell-file-name interpreter)
+         (explicit-shell-file-name interpreter)
+         (shell-command-switch command-switch)
+         ;; NB: w32-only feature
+         (w32-quote-process-args (or w32-arg-quote
+                                     (when (boundp 'w32-quote-process-args)
+                                       w32-quote-process-args))))
+    (cl-progv
+        (list explicit-interpreter-args-var)
+        (list (or interpreter-args
+                  (when (boundp explicit-interpreter-args-var)
+                    (symbol-value explicit-interpreter-args-var))))
+      (funcall func))))
 
 
 

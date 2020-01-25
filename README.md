@@ -18,20 +18,6 @@ For now, the recommended way to install is with [use-package](https://github.com
   :quelpa (with-shell-interpreter :fetcher github :repo "p3r7/with-shell-interpreter"))
 ```
 
-## Configuration
-
-The package defines 3 variables for configuring the default interpreter for remote connections:
-
- - `default-remote-shell-interpreter`: takes precedence over `shell-file-name`. Default value is `"/bin/bash"`.
- - `default-remote-shell-interpreter-args`: takes precedence over `explicit-INTEPRETER-args`. Default value is `'("-c" "export EMACS=; export TERM=dumb; stty echo; bash")`.
- - `default-remote-shell-interpreter-command-swith`: takes precedence over `shell-command-switch`. Default value is `-c`.
-
-We want this behavior as the user might have redefined the value of `shell-file-name` with something exotic (e.g. zsh) and we would want a safer default for remote servers.
-
-Furthermore, under Microsoft Windows, `shell-file-name` defaults to _cmdproxy.exe_ which is OK for local shells but sucks for remote ones...
-
-These values can be overriden with keyword arguments _:interpreter_, _::interpreter-args_ and _:command-switch_ respectively.
-
 
 ## Usage
 
@@ -85,6 +71,21 @@ Under Microsoft Windows, launching an interactive shell with the git-bash interp
    (let (current-prefix-arg '(4))       ; don't prompt user for interpreter
         (shell)))
 ```
+
+
+## Configuration
+
+The package defines 3 variables for configuring the default interpreter for remote connections:
+
+ - `default-remote-shell-interpreter`: takes precedence over `shell-file-name`. Default value is `"/bin/bash"`.
+ - `default-remote-shell-interpreter-args`: takes precedence over `explicit-INTEPRETER-args`. Default value is `'("-c" "export EMACS=; export TERM=dumb; stty echo; bash")`.
+ - `default-remote-shell-interpreter-command-swith`: takes precedence over `shell-command-switch`. Default value is `-c`.
+
+We want this behavior as the user might have redefined the value of `shell-file-name` with something exotic (e.g. zsh) and we would want a safer default for remote servers.
+
+Furthermore, under Microsoft Windows, `shell-file-name` defaults to _cmdproxy.exe_ which is OK for local shells but sucks for remote ones...
+
+These values can be overriden with keyword arguments _:interpreter_, _::interpreter-args_ and _:command-switch_ respectively.
 
 
 ## Legibility

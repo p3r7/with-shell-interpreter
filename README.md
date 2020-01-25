@@ -37,17 +37,30 @@ These values can be overriden with keyword arguments _:interpreter_, _::interpre
 
 We recommand using the macro `with-shell-interpreter`. It's a more convenient version of `eval-with-shell-interpreter` that prevents having to quote _:form_ and wrap it in a `progn`.
 
-| keyword argument  | implicit var being let-bound                   | mandatory?         | description                                                        |
-|-------------------|------------------------------------------------|--------------------|--------------------------------------------------------------------|
-| :form             |                                                | :heavy_check_mark: | The s-expressions to eval.                                         |
-| :path             | `default-directory`                            | :x:                | The path from which to eval. Use a remote path for remote servers. |
-| :interpreter      | `explicit-shell-file-name` / `shell-file-name` | :x:                | Name or absolute path of shell interpreter executable.             |
-| :interpreter-args | `explicit-INTEPRETER-args`                     | :x:                | Login args to call interpreter with for login.                     |
-| :command-switch   | `shell-command-switch`                         | :x:                | Command switch arg for asking interpreter to run a shell command.  |
+| keyword argument  | implicit var being let-bound                   | mandatory?         | description                                                       |
+|-------------------|------------------------------------------------|--------------------|-------------------------------------------------------------------|
+| :form             |                                                | :heavy_check_mark: | The s-expressions to eval.                                        |
+| :path             | `default-directory`                            | :x:                | The path from which to eval.                                      |
+| :interpreter      | `explicit-shell-file-name` / `shell-file-name` | :x:                | Name or absolute path of shell interpreter executable.            |
+| :interpreter-args | `explicit-INTEPRETER-args`                     | :x:                | Login args to call interpreter with for login.                    |
+| :command-switch   | `shell-command-switch`                         | :x:                | Command switch arg for asking interpreter to run a shell command. |
+
+_:form_ is expected to contain calls to functions relying on the Emacs shell APIs (e.g. `shell`, `shell-command`, `async-shell-command` and `shell-command-to-string`).
+
+Setting _:path_ to a remote location (with TRAMP format, i.e. `/<method>:<user>@<host>:<localname>`) allows running form with interpreter of remote server.
 
 _:interpreter-args_ is only usefull for interactive shells (from package shell-mode).
 
 _:command-switch_ is only usefull for single shell commands (from package simple).
+
+If left empty, here are the default values being used:
+
+| keyword argument  | fallback value (local path)       | fallback value (remote path)                     |
+|-------------------|-----------------------------------|--------------------------------------------------|
+| :path             | current `default-directory`       | current `default-directory`                      |
+| :interpreter      | `shell-file-name`                 | `default-remote-shell-interpreter`               |
+| :interpreter-args | `explicit-INTEPRETER-args` if set | `default-remote-shell-interpreter-args`          |
+| :command-switch   | `shell-command-switch`            | `default-remote-shell-interpreter-command-swith` |
 
 
 #### Example

@@ -85,7 +85,7 @@ We want this behavior as the user might have redefined the value of `shell-file-
 
 Furthermore, under Microsoft Windows, `shell-file-name` defaults to _cmdproxy.exe_ which is OK for local shells but sucks for remote ones...
 
-These values can be overriden with keyword arguments _:interpreter_, _::interpreter-args_ and _:command-switch_ respectively.
+These values can be overriden with keyword arguments _:interpreter_, _:interpreter-args_ and _:command-switch_ respectively.
 
 
 ## Legibility

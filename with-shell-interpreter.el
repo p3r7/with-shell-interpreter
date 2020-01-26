@@ -27,7 +27,6 @@
 
 ;; VARS
 
-(defvar with-shell-interpreter-default-local shell-file-name)
 (defvar with-shell-interpreter-default-remote "/bin/bash"
   "For remote shells, default interpreter exec to fallback to if :interpreter is not specified.
 Let-binds `explicit-shell-file-name' and `shell-file-name'.")

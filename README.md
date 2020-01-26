@@ -1,8 +1,10 @@
 # with-shell-interpreter
 
-Helper for Emacs shell command APIs.
+Helper for Emacs shell command APIs, making implict argument as explicit keyword arguments.
 
 This package is a library and does not provide any command.
+
+It is inspired by the `eval-after-load` / `with-eval-after-load` functions.
 
 For more context, read the [accompanying blog post](https://www.eigenbahn.com/2020/01/19/painless-emacs-shell-commands).
 

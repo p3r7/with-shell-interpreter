@@ -24,10 +24,10 @@
 
 ;; VARS
 
-(defvar default-local-shell-interpreter shell-file-name)
-(defvar default-remote-shell-interpreter "/bin/bash")
-(defvar default-remote-shell-interpreter-args '("-c" "export EMACS=; export TERM=dumb; stty echo; bash"))
-(defvar default-remote-shell-interpreter-command-swith "-c")
+(defvar with-shell-interpreter-default-local shell-file-name)
+(defvar with-shell-interpreter-default-remote "/bin/bash")
+(defvar with-shell-interpreter-default-remote-args '("-c" "export EMACS=; export TERM=dumb; stty echo; bash"))
+(defvar with-shell-interpreter-default-remote-command-swith "-c")
 
 
 
@@ -91,15 +91,15 @@ this file.  Usage:
          (is-remote (file-remote-p path))
          (interpreter (or interpreter
                           (if is-remote
-                              default-remote-shell-interpreter
+                              with-shell-interpreter-default-remote
                             shell-file-name)))
          (interpreter (with-shell-interpreter--normalize-path interpreter))
          (interpreter-name (with-shell-interpreter--get-interpreter-name interpreter))
          (explicit-interpreter-args-var (intern (concat "explicit-" interpreter-name "-args")))
-         (interpreter-args (or interpreter-args (when is-remote default-remote-shell-interpreter-args)))
+         (interpreter-args (or interpreter-args (when is-remote with-shell-interpreter-default-remote-args)))
          (command-switch (or command-switch
                              (if is-remote
-                                 default-remote-shell-interpreter-command-swith
+                                 with-shell-interpreter-default-remote-command-swith
                                shell-command-switch)))
          ;; bellow are vars acting as implicit options to shell functions
          (default-directory path)

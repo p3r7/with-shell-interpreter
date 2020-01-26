@@ -41,12 +41,12 @@ _:command-switch_ is only usefull for single shell commands (from package simple
 
 If left empty, here are the default values being used:
 
-| keyword argument  | fallback value (local path)       | fallback value (remote path)                     |
-|-------------------|-----------------------------------|--------------------------------------------------|
-| :path             | current `default-directory`       | current `default-directory`                      |
-| :interpreter      | `shell-file-name`                 | `default-remote-shell-interpreter`               |
-| :interpreter-args | `explicit-INTEPRETER-args` if set | `default-remote-shell-interpreter-args`          |
-| :command-switch   | `shell-command-switch`            | `default-remote-shell-interpreter-command-swith` |
+| keyword argument  | fallback value (local path)       | fallback value (remote path)                          |
+|-------------------|-----------------------------------|-------------------------------------------------------|
+| :path             | current `default-directory`       | current `default-directory`                           |
+| :interpreter      | `shell-file-name`                 | `with-shell-interpreter-default-remoter`              |
+| :interpreter-args | `explicit-INTEPRETER-args` if set | `with-shell-interpreter-default-remote-args`          |
+| :command-switch   | `shell-command-switch`            | `with-shell-interpreter-default-remote-command-swith` |
 
 
 #### Example
@@ -79,9 +79,9 @@ For more practical examples, have a look at packages in [prf-shell](https://gith
 
 The package defines 3 variables for configuring the default interpreter for remote connections:
 
- - `default-remote-shell-interpreter`: takes precedence over `shell-file-name`. Default value is `"/bin/bash"`.
- - `default-remote-shell-interpreter-args`: takes precedence over `explicit-INTEPRETER-args`. Default value is `'("-c" "export EMACS=; export TERM=dumb; stty echo; bash")`.
- - `default-remote-shell-interpreter-command-swith`: takes precedence over `shell-command-switch`. Default value is `-c`.
+ - `with-shell-interpreter-default-remote`: takes precedence over `shell-file-name`. Default value is `"/bin/bash"`.
+ - `with-shell-interpreter-default-remote-args`: takes precedence over `explicit-INTEPRETER-args`. Default value is `'("-c" "export EMACS=; export TERM=dumb; stty echo; bash")`.
+ - `with-shell-interpreter-default-remote-command-swith`: takes precedence over `shell-command-switch`. Default value is `-c`.
 
 We want this behavior as the user might have redefined the value of `shell-file-name` with something exotic (e.g. zsh) and we would want a safer default for remote servers.
 

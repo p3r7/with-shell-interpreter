@@ -3,8 +3,9 @@
 ;; Copyright (C) 2019-2020 Jordan Besly
 ;;
 ;; Version: 0.1.0
-;; Keywords: tramp, shell
+;; Keywords: processes, terminals
 ;; URL: https://github.com/p3r7/with-shell-interpreter
+;; Package-Requires: ((cl-lib "0.6.1"))
 ;;
 ;; Permission is hereby granted to use and distribute this code, with or
 ;; without modifications, provided that this copyright notice is copied with
@@ -20,6 +21,8 @@
 
 ;;; Code:
 
+
+(require 'cl-lib)
 
 
 ;; VARS
@@ -40,7 +43,7 @@ Let-binds `shell-command-switch'")
 ;; MAIN HELPER
 
 (defmacro with-shell-interpreter (&rest args)
-  "Eval :form at location described by PATH with INTERPRETER binary.
+  "Eval :form at location described by :path with :interpreter binary.
 
 For full documentation, please see the README file that came with
 this file.  Usage:
@@ -128,13 +131,14 @@ this file.  Usage:
 ;; PRIVATE HELPERS
 
 (defun with-shell-interpreter--normalize-path (path)
-  "Normalize path, converting \\ into /."
+  "Normalize PATH, converting \\ into /."
   ;; REVIEW: shouldn't we just useinstead `convert-standard-filename'
   ;; or even `executable-find'?
   (subst-char-in-string ?\\ ?/ path))
 
 
 (defun with-shell-interpreter--get-interpreter-name (interpreter)
+  "Extracts INTERPRETER name, keeping extension."
   (file-name-nondirectory interpreter))
 
 
@@ -142,4 +146,4 @@ this file.  Usage:
 
 (provide 'with-shell-interpreter)
 
-;;; with-shell-interpreter.el ends here.
+;;; with-shell-interpreter.el ends here

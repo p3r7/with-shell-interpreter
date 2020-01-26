@@ -82,13 +82,14 @@ this file.  Usage:
                     Let-binds `w32-quote-process-args'."
   (declare (indent 1) (debug t))
   `(eval-with-shell-interpreter
-    :form (lambda () ,(plist-get args :form))
+    :form (lambda () ,(cons 'progn (with-shell-interpreter--plist-get args :form)))
     :path ,(plist-get args :path)
     :interpreter ,(plist-get args :interpreter)
     :interpreter-args ,(plist-get args :interpreter-args)
     :command-switch ,(plist-get args :command-switch)
     :w32-arg-quote ,(plist-get args :w32-arg-quote)))
 
+(put 'with-shell-interpreter 'lisp-indent-function 'defun)
 
 (cl-defun eval-with-shell-interpreter (&key form path
                                             interpreter interpreter-args command-switch
@@ -146,6 +147,22 @@ this file.  Usage:
 (defun with-shell-interpreter--get-interpreter-name (interpreter)
   "Extracts INTERPRETER name, keeping extension."
   (file-name-nondirectory interpreter))
+
+
+(defun with-shell-interpreter--plist-get (plist prop)
+  "Like `plist-get' except allows value to be multiple elements."
+  (unless (null plist)
+    (cl-loop with passed = nil
+             for e in plist
+             ;; unless (keywordp e)
+             until (and passed
+                        (keywordp e)
+                        (not (eq e prop)))
+             if (and passed
+                     (not (keywordp e)))
+             collect e
+             else if (not passed)
+             do (setq passed 't))))
 
 
 

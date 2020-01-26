@@ -25,9 +25,15 @@
 ;; VARS
 
 (defvar with-shell-interpreter-default-local shell-file-name)
-(defvar with-shell-interpreter-default-remote "/bin/bash")
-(defvar with-shell-interpreter-default-remote-args '("-c" "export EMACS=; export TERM=dumb; stty echo; bash"))
-(defvar with-shell-interpreter-default-remote-command-swith "-c")
+(defvar with-shell-interpreter-default-remote "/bin/bash"
+  "For remote shells, default interpreter exec to fallback to if :interpreter is not specified.
+Let-binds `explicit-shell-file-name' and `shell-file-name'.")
+(defvar with-shell-interpreter-default-remote-args '("-c" "export EMACS=; export TERM=dumb; stty echo; bash")
+  "For remote shells, default interpreter args to fallback to if :interpreter-args is not specified.
+Let-binds `explicit-INTEPRETER-args'")
+(defvar with-shell-interpreter-default-remote-command-swith "-c"
+  "For remote shells, default interpreter command switch to fallback to if :command-switch is not specified.
+Let-binds `shell-command-switch'")
 
 
 

@@ -23,7 +23,7 @@ For now, the recommended way to install is with [use-package](https://github.com
 
 ## Usage
 
-We recommand using the macro `with-shell-interpreter`. It's a more convenient version of `eval-with-shell-interpreter` that prevents having to quote _:form_ and wrap it in a `progn`.
+We recommand using the macro `with-shell-interpreter`. It's a more convenient version of `with-shell-interpreter-eval` that prevents having to quote _:form_ and wrap it in a `progn`.
 
 | keyword argument  | implicit var being let-bound                   | mandatory?         | description                                                       |
 |-------------------|------------------------------------------------|--------------------|-------------------------------------------------------------------|

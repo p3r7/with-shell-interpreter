@@ -88,7 +88,7 @@ this file.  Usage:
                     Character to use for quoting arguments.
                     Let-binds `w32-quote-process-args'."
   (declare (indent 1) (debug t))
-  `(eval-with-shell-interpreter
+  `(with-shell-interpreter-eval
     :form (lambda () ,(cons 'progn (with-shell-interpreter--plist-get args :form)))
     :path ,(plist-get args :path)
     :interpreter ,(plist-get args :interpreter)
@@ -98,7 +98,7 @@ this file.  Usage:
 
 (put 'with-shell-interpreter 'lisp-indent-function 'defun)
 
-(cl-defun eval-with-shell-interpreter (&key form path
+(cl-defun with-shell-interpreter-eval (&key form path
                                             interpreter interpreter-args command-switch
                                             w32-arg-quote)
   "Same as `with-shell-interpreter' except :form has to be a quoted sexp."

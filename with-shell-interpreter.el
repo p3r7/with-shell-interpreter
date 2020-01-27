@@ -168,7 +168,9 @@ Like `plist-get' except allows value to be multiple elements."
              if (and passed
                      (not (keywordp e)))
              collect e
-             else if (not passed)
+             else if (and (not passed)
+                          (keywordp e)
+                          (eq e prop))
              do (setq passed 't))))
 
 

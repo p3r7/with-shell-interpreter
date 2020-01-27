@@ -1,4 +1,4 @@
-;;; with-shell-interpreter.el --- Helper for shell command APIs
+;;; with-shell-interpreter.el --- Helper for shell command APIs -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2019-2020 Jordan Besly
 ;;
@@ -27,6 +27,8 @@
 
 (require 'cl-lib)
 
+(require 'shell)
+
 
 
 ;; VARS
@@ -43,6 +45,11 @@ Let-binds `explicit-INTEPRETER-args'")
   "For remote shells, default interpreter command switch to fallback to if \
 :command-switch is not specified.
 Let-binds `shell-command-switch'")
+
+;; NB: only bound on Windows build of Emacs
+(unless (boundp 'w32-quote-process-args)
+  ;; tame lexical binding warnings
+  (defvar w32-quote-process-args))
 
 
 

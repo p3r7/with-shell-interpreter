@@ -58,7 +58,7 @@ Let-binds `shell-command-switch'")
 (defmacro with-shell-interpreter (&rest args)
   "Eval :form at location described by :path with :interpreter binary.
 
-For full documentation, please see the README file that came with
+For full documentation on ARGS, please see the README file that came with
 this file.  Usage:
 
   (with-shell-interpreter
@@ -157,7 +157,8 @@ this file.  Usage:
 
 
 (defun with-shell-interpreter--plist-get (plist prop)
-  "Like `plist-get' except allows value to be multiple elements."
+  "Extract value of porperty PROP from property list PLIST.
+Like `plist-get' except allows value to be multiple elements."
   (unless (null plist)
     (cl-loop with passed = nil
              for e in plist

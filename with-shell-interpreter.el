@@ -162,7 +162,6 @@ Like `plist-get' except allows value to be multiple elements."
   (unless (null plist)
     (cl-loop with passed = nil
              for e in plist
-             ;; unless (keywordp e)
              until (and passed
                         (keywordp e)
                         (not (eq e prop)))

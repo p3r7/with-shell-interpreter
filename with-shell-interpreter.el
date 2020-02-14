@@ -39,7 +39,8 @@ is not specified.
 Let-binds `explicit-shell-file-name' and `shell-file-name'.")
 (defvar with-shell-interpreter-default-remote-args '("-c" "export EMACS=; export TERM=dumb; stty echo; bash")
   "For remote shells, default interpreter args to fallback to if \
-:interpreter-args is not specified.
+:interpreter-args is not specified and :interpreter is equal to \
+`with-shell-interpreter-default-remote'.
 Let-binds `explicit-INTEPRETER-args'")
 (defvar with-shell-interpreter-default-remote-command-swith "-c"
   "For remote shells, default interpreter command switch to fallback to if \
@@ -119,7 +120,10 @@ this file.  Usage:
          (interpreter (with-shell-interpreter--normalize-path interpreter))
          (interpreter-name (with-shell-interpreter--get-interpreter-name interpreter))
          (explicit-interpreter-args-var (intern (concat "explicit-" interpreter-name "-args")))
-         (interpreter-args (or interpreter-args (when is-remote with-shell-interpreter-default-remote-args)))
+         (interpreter-args (or interpreter-args
+                               (when (and is-remote
+                                          (string= interpreter with-shell-interpreter-default-remote))
+                                 with-shell-interpreter-default-remote-args)))
          (command-switch (or command-switch
                              (if is-remote
                                  with-shell-interpreter-default-remote-command-swith

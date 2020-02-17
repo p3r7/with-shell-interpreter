@@ -72,13 +72,13 @@ ARGS are in fact keywords, `with-shell-interpreter' being a macro wrapper around
                     Can be local or remote (TRAMP format).
                     Let-binds `default-directory'.
 :interpreter        Name or absolute path of shell interpreter executable.
-                    If only providint a name, ensure that the executable
+                    If only providing a name, ensure that the executable
                     is present in the PATH.
                     Let-binds `explicit-shell-file-name' and
                     `shell-file-name'.
 :interpreter-args   Login args to call interpreter with for login.
                     Let-binds `explicit-INTEPRETER-args'.
-                    Usefull only for interactive shells.
+                    Useful only for interactive shells.
 :command-switch     Command switch arg for asking interpreter to run a
                     shell command (e.g. \"-c\" in bourne shell and most
                     derivatives).
@@ -162,7 +162,7 @@ For more detailed instructions, have a look at https://github.com/p3r7/with-shel
 
 
 (defun with-shell-interpreter--plist-get (plist prop)
-  "Extract value of porperty PROP from property list PLIST.
+  "Extract value of property PROP from property list PLIST.
 Like `plist-get' except allows value to be multiple elements."
   (unless (null plist)
     (cl-loop with passed = nil

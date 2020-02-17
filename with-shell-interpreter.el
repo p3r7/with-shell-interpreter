@@ -17,7 +17,7 @@
 ;;; Commentary:
 ;;  -----------
 ;;
-;; For detailed instructions, please look at the README.md
+;; For detailed instructions, please look at the README.md at https://github.com/p3r7/with-shell-interpreter/blob/master/README.md
 
 ;;; Code:
 
@@ -59,8 +59,7 @@ Let-binds `shell-command-switch'")
 (defmacro with-shell-interpreter (&rest args)
   "Eval :form at location described by :path with :interpreter binary.
 
-For full documentation on ARGS, please see the README file that came with
-this file.  Usage:
+ARGS are in fact keywords, `with-shell-interpreter' being a macro wrapper around `with-shell-interpreter-eval'.  Usage:
 
   (with-shell-interpreter
      [:keyword [option]]...
@@ -87,7 +86,9 @@ this file.  Usage:
                     Usefull only for single shell commands.
 :w32-arg-quote      Only effecting Microsoft Windows build of Emacs.
                     Character to use for quoting arguments.
-                    Let-binds `w32-quote-process-args'."
+                    Let-binds `w32-quote-process-args'.
+
+For more detailed instructions, have a look at https://github.com/p3r7/with-shell-interpreter/blob/master/README.md"
   (declare (indent 1) (debug t))
   `(with-shell-interpreter-eval
     :form (lambda () ,(cons 'progn (with-shell-interpreter--plist-get args :form)))

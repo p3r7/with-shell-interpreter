@@ -164,7 +164,7 @@ For more detailed instructions, have a look at https://github.com/p3r7/with-shel
 (defun with-shell-interpreter--plist-get (plist prop)
   "Extract value of property PROP from property list PLIST.
 Like `plist-get' except allows value to be multiple elements."
-  (unless (null plist)
+  (when plist
     (cl-loop with passed = nil
              for e in plist
              until (and passed

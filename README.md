@@ -1,4 +1,5 @@
-# with-shell-interpreter
+# with-shell-interpreter [![MELPA](https://melpa.org/packages/with-shell-interpreter-badge.svg)](https://melpa.org/#/with-shell-interpreter)
+
 
 Helper for Emacs shell command APIs, making implict argument as explicit keyword arguments.
 
@@ -11,14 +12,15 @@ For more context, read the [accompanying blog post](https://www.eigenbahn.com/20
 
 ## Installation
 
-Not yet on [Melpa](https://melpa.org/).
-
-For now, the recommended way to install is with [use-package](https://github.com/jwiegley/use-package), [quelpa](https://github.com/quelpa/quelpa) and [quelpa-use-package](https://github.com/quelpa/quelpa-use-package).
+It's available on [Melpa](https://melpa.org/).
 
 ```el
-(use-package with-shell-interpreter
-  :quelpa (with-shell-interpreter :fetcher github :repo "p3r7/with-shell-interpreter"))
+(use-package with-shell-interpreter)
 ```
+
+Or one could just do:
+
+    M-x package-install s
 
 
 ## Usage

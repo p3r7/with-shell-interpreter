@@ -28,7 +28,7 @@
 ;;; Commentary:
 ;;  -----------
 ;;
-;; Helper macro for Emacs shell command APIs, making implict argument as explicit keyword arguments.
+;; Helper macro for Emacs shell command APIs, making implicit argument as explicit keyword arguments.
 ;; Provides macro `with-shell-interpreter'.
 ;;
 ;; For detailed instructions, please look at the README.md at https://github.com/p3r7/with-shell-interpreter/blob/master/README.md
@@ -73,7 +73,8 @@ Let-binds `shell-command-switch'")
 (defmacro with-shell-interpreter (&rest args)
   "Eval :form at location described by :path with :interpreter binary.
 
-ARGS are in fact keywords, `with-shell-interpreter' being a macro wrapper around `with-shell-interpreter-eval'.  Usage:
+ARGS are in fact keywords, `with-shell-interpreter' being a macro wrapper around
+`with-shell-interpreter-eval'.  Usage:
 
   (with-shell-interpreter
      [:keyword [option]]...
@@ -97,10 +98,15 @@ ARGS are in fact keywords, `with-shell-interpreter' being a macro wrapper around
                     shell command (e.g. \"-c\" in bourne shell and most
                     derivatives).
                     Let-binds `shell-command-switch'.
-                    Usefull only for single shell commands.
-:w32-arg-quote      Only effecting Microsoft Windows build of Emacs.
+                    Useful only for single shell commands.
+:w32-arg-quote      Only affecting Microsoft Windows build of Emacs.
                     Character to use for quoting arguments.
                     Let-binds `w32-quote-process-args'.
+:allow-local-vars   If t, allow local values to have precedence over global ones for:
+                     - `explicit-shell-file-name'
+                     - `explicit-INTEPRETER-args'
+                     - `shell-command-switch'
+                     - `w32-quote-process-args'
 
 For more detailed instructions, have a look at https://github.com/p3r7/with-shell-interpreter/blob/master/README.md"
   (declare (indent 1) (debug t))
@@ -110,13 +116,15 @@ For more detailed instructions, have a look at https://github.com/p3r7/with-shel
     :interpreter ,(plist-get args :interpreter)
     :interpreter-args ,(plist-get args :interpreter-args)
     :command-switch ,(plist-get args :command-switch)
-    :w32-arg-quote ,(plist-get args :w32-arg-quote)))
+    :w32-arg-quote ,(plist-get args :w32-arg-quote)
+    :allow-local-vars ,(plist-get args :allow-local-vars)))
 
 (put 'with-shell-interpreter 'lisp-indent-function 'defun)
 
 (cl-defun with-shell-interpreter-eval (&key form path
                                             interpreter interpreter-args command-switch
-                                            w32-arg-quote)
+                                            w32-arg-quote
+                                            allow-local-vars)
   "Same as `with-shell-interpreter' except :form has to be a quoted sexp."
   (unless path
     (setq path default-directory))
@@ -128,35 +136,24 @@ For more detailed instructions, have a look at https://github.com/p3r7/with-shel
             ;; Try to use the "current" lexical/dynamic mode for `form'.
             (eval `(lambda () ,form) lexical-binding)))
          (is-remote (file-remote-p path))
-         (interpreter (or interpreter
-                          (if is-remote
-                              with-shell-interpreter-default-remote
-                            shell-file-name)))
-         (interpreter (with-shell-interpreter--normalize-path interpreter))
+         (ignore-local-vars (not allow-local-vars))
+         (interpreter (with-shell-interpreter--get-interpreter-value is-remote ignore-local-vars interpreter))
          (interpreter-name (with-shell-interpreter--get-interpreter-name interpreter))
          (explicit-interpreter-args-var (intern (concat "explicit-" interpreter-name "-args")))
-         (interpreter-args (or interpreter-args
-                               (when (and is-remote
-                                          (string= interpreter with-shell-interpreter-default-remote))
-                                 with-shell-interpreter-default-remote-args)))
-         (command-switch (or command-switch
-                             (if is-remote
-                                 with-shell-interpreter-default-remote-command-swith
-                               shell-command-switch)))
+         (interpreter-args (with-shell-interpreter--get-interpreter-args-value is-remote explicit-interpreter-args-var
+                                                                               interpreter
+                                                                               ignore-local-vars interpreter-args))
+         (command-switch (with-shell-interpreter--get-command-switch is-remote ignore-local-vars command-switch))
          ;; bellow are vars acting as implicit options to shell functions
          (default-directory path)
          (shell-file-name interpreter)
          (explicit-shell-file-name interpreter)
          (shell-command-switch command-switch)
          ;; NB: w32-only feature
-         (w32-quote-process-args (or w32-arg-quote
-                                     (when (boundp 'w32-quote-process-args)
-                                       w32-quote-process-args))))
+         (w32-quote-process-args (with-shell-interpreter--get-w32-quote-process-args ignore-local-vars w32-arg-quote)))
     (cl-progv
         (list explicit-interpreter-args-var)
-        (list (or interpreter-args
-                  (when (boundp explicit-interpreter-args-var)
-                    (symbol-value explicit-interpreter-args-var))))
+        (list interpreter-args)
       (funcall func))))
 
 
@@ -165,7 +162,7 @@ For more detailed instructions, have a look at https://github.com/p3r7/with-shel
 
 (defun with-shell-interpreter--normalize-path (path)
   "Normalize PATH, converting \\ into /."
-  ;; REVIEW: shouldn't we just useinstead `convert-standard-filename'
+  ;; REVIEW: shouldn't we just use instead `convert-standard-filename'
   ;; or even `executable-find'?
   (subst-char-in-string ?\\ ?/ path))
 
@@ -191,6 +188,64 @@ Like `plist-get' except allows value to be multiple elements."
                           (keywordp e)
                           (eq e prop))
              do (setq passed 't))))
+
+
+(defun with-shell-interpreter--symbol-value (sym &optional ignore-local)
+  "Return the value of SYM in current buffer.
+If IGNORE-LOCAL is nil, returns global value."
+  (if ignore-local
+      (default-value sym)
+    (symbol-value sym)))
+
+
+(defun with-shell-interpreter--get-interpreter-value (is-remote &optional ignore-local-vars input-value)
+  "Determine value of shell interpreter.
+Uses INPUT-VALUE if not empty, else fallbacks to default values, depending on
+whether:
+ - IS-REMOTE or not
+ - IGNORE-LOCAL-VARS or not"
+  (with-shell-interpreter--normalize-path
+   (or input-value
+       (if is-remote
+           with-shell-interpreter-default-remote
+         (or (with-shell-interpreter--symbol-value 'shell-file-name ignore-local-vars)
+             (with-shell-interpreter--symbol-value 'explicit-shell-file-name ignore-local-vars))))))
+
+
+(defun with-shell-interpreter--get-interpreter-args-value (is-remote args-var-name interpreter &optional ignore-local-vars input-value)
+  "Determine value of shell interpreter.
+Uses INPUT-VALUE if not empty, else fallbacks to default values, depending on
+ARGS-VAR-NAME, INTERPRETER and whether:
+ - IS-REMOTE or not
+ - IGNORE-LOCAL-VARS or not"
+  (or input-value
+      (when (and is-remote
+                 (string= interpreter with-shell-interpreter-default-remote))
+        with-shell-interpreter-default-remote-args)
+      (when (boundp args-var-name)
+        (with-shell-interpreter--symbol-value args-var-name ignore-local-vars))))
+
+
+(defun with-shell-interpreter--get-command-switch (is-remote &optional ignore-local-vars input-value)
+  "Determine value of shell command switch.
+Uses INPUT-VALUE if not empty, else fallbacks to default values, depending on
+ whether:
+ - IS-REMOTE or not
+ - IGNORE-LOCAL-VARS or not"
+  (or input-value
+      (if is-remote
+          with-shell-interpreter-default-remote-command-swith
+        (with-shell-interpreter--symbol-value 'shell-command-switch ignore-local-vars))))
+
+
+(defun with-shell-interpreter--get-w32-quote-process-args (&optional ignore-local-vars input-value)
+  "Determine value of shell command switch.
+Uses INPUT-VALUE if not empty, else fallbacks to default values, depending on
+whether:
+ - IGNORE-LOCAL-VARS or not"
+  (or input-value
+      (when (boundp 'w32-quote-process-args)
+        (with-shell-interpreter--symbol-value 'w32-quote-process-args ignore-local-vars))))
 
 
 

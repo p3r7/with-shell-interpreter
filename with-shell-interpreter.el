@@ -194,7 +194,9 @@ Like `plist-get' except allows value to be multiple elements."
   "Return the value of SYM in current buffer.
 If IGNORE-LOCAL is nil, returns global value."
   (if ignore-local
-      (default-value sym)
+      ;; NB: if local-only `default-value' throws an error
+      (ignore-errors
+        (default-value sym))
     (symbol-value sym)))
 
 

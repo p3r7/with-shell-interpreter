@@ -12,15 +12,17 @@ For more context, read the [accompanying blog post](https://www.eigenbahn.com/20
 
 ## Installation
 
-It's available on [Melpa](https://melpa.org/).
+The package is available on [Melpa](https://melpa.org/).
+
+With `use-package`:
 
 ```el
 (use-package with-shell-interpreter)
 ```
 
-Or one could just do:
+Manually:
 
-    M-x package-install s
+    M-x package-install with-shell-interpreter
 
 
 ## Usage

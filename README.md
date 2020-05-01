@@ -51,7 +51,7 @@ If left empty, here are the default values being used:
 | keyword argument  | fallback value (local path)       | fallback value (remote path)                          |
 |-------------------|-----------------------------------|-------------------------------------------------------|
 | :path             | current `default-directory`       | current `default-directory`                           |
-| :interpreter      | `shell-file-name`                 | `with-shell-interpreter-default-remoter`              |
+| :interpreter      | `shell-file-name`                 | `with-shell-interpreter-default-remote`               |
 | :interpreter-args | `explicit-INTEPRETER-args` if set | `with-shell-interpreter-default-remote-args`          |
 | :command-switch   | `shell-command-switch`            | `with-shell-interpreter-default-remote-command-swith` |
 | :w32-arg-quote    | `w32-quote-process-args`          | `w32-quote-process-args`                              |

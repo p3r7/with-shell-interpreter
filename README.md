@@ -80,7 +80,7 @@ Under Microsoft Windows, launching an interactive shell with the git-bash interp
         (shell)))
 ```
 
-For more practical examples, have a look at packages in [prf-shell](https://github.com/p3r7/prf-shell).
+For more practical examples, have a look at packages in [friendly-shell](https://github.com/p3r7/friendly-shell) ([examples](https://github.com/p3r7/friendly-shell/blob/master/examples.md)).
 
 
 ## Configuration

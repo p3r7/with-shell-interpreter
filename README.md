@@ -29,14 +29,14 @@ Manually:
 
 We recommand using the macro `with-shell-interpreter`. It's a more convenient version of `with-shell-interpreter-eval` that prevents having to quote _:form_ and wrap it in a `progn`.
 
-| keyword argument  | implicit var being let-bound                   | mandatory?         | description                                                                       |
-|-------------------|------------------------------------------------|--------------------|-----------------------------------------------------------------------------------|
-| :form             |                                                | :heavy_check_mark: | The s-expressions to eval.                                                        |
-| :path             | `default-directory`                            | :x:                | The path from which to eval.                                                      |
-| :interpreter      | `explicit-shell-file-name` / `shell-file-name` | :x:                | Name or absolute path of shell interpreter executable.                            |
-| :interpreter-args | `explicit-INTEPRETER-args`                     | :x:                | Login args to call interpreter with for login.                                    |
-| :command-switch   | `shell-command-switch`                         | :x:                | Command switch arg for asking interpreter to run a shell command.                 |
-| :w32-arg-quote    | `w32-quote-process-args`                       | :x:                | Character to use for quoting shell arguments (only on the Windows build of Emacs) |
+| keyword argument    | implicit var being let-bound                   | mandatory?         | description                                                                       |
+|---------------------|------------------------------------------------|--------------------|-----------------------------------------------------------------------------------|
+| _:form_             |                                                | :heavy_check_mark: | The s-expressions to eval.                                                        |
+| _:path_             | `default-directory`                            | :x:                | The path from which to eval.                                                      |
+| _:interpreter_      | `explicit-shell-file-name` / `shell-file-name` | :x:                | Name or absolute path of shell interpreter executable.                            |
+| _:interpreter-args_ | `explicit-INTEPRETER-args`                     | :x:                | Login args to call interpreter with for login.                                    |
+| _:command-switch_   | `shell-command-switch`                         | :x:                | Command switch arg for asking interpreter to run a shell command.                 |
+| _:w32-arg-quote_    | `w32-quote-process-args`                       | :x:                | Character to use for quoting shell arguments (only on the Windows build of Emacs) |
 
 _:form_ is expected to contain calls to functions relying on the Emacs shell APIs (e.g. `shell`, `shell-command`, `async-shell-command` and `shell-command-to-string`).
 
@@ -48,13 +48,13 @@ _:command-switch_ is only usefull for single shell commands (from package simple
 
 If left empty, here are the default values being used:
 
-| keyword argument  | fallback value (local path)       | fallback value (remote path)                          |
-|-------------------|-----------------------------------|-------------------------------------------------------|
-| :path             | current `default-directory`       | current `default-directory`                           |
-| :interpreter      | `shell-file-name`                 | `with-shell-interpreter-default-remote`               |
-| :interpreter-args | `explicit-INTEPRETER-args` if set | `with-shell-interpreter-default-remote-args`          |
-| :command-switch   | `shell-command-switch`            | `with-shell-interpreter-default-remote-command-swith` |
-| :w32-arg-quote    | `w32-quote-process-args`          | `w32-quote-process-args`                              |
+| keyword argument    | fallback value (local path)       | fallback value (remote path)                          |
+|---------------------|-----------------------------------|-------------------------------------------------------|
+| _:path_             | current `default-directory`       | current `default-directory`                           |
+| _:interpreter_      | `shell-file-name`                 | `with-shell-interpreter-default-remote`               |
+| _:interpreter-args_ | `explicit-INTEPRETER-args` if set | `with-shell-interpreter-default-remote-args`          |
+| _:command-switch_   | `shell-command-switch`            | `with-shell-interpreter-default-remote-command-swith` |
+| _:w32-arg-quote_    | `w32-quote-process-args`          | `w32-quote-process-args`                              |
 
 
 #### Example

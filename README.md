@@ -1,4 +1,4 @@
-# with-shell-interpreter [![MELPA](https://melpa.org/packages/with-shell-interpreter-badge.svg)](https://melpa.org/#/with-shell-interpreter)
+# with-shell-interpreter [![MELPA](https://melpa.org/packages/with-shell-interpreter-badge.svg)](https://melpa.org/#/with-shell-interpreter) [![MELPA Stable](https://stable.melpa.org/packages/with-shell-interpreter-badge.svg)](https://stable.melpa.org/#/with-shell-interpreter)
 
 
 Helper for Emacs shell command APIs, making implict argument as explicit keyword arguments.

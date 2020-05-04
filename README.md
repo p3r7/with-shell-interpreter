@@ -1,7 +1,7 @@
 # with-shell-interpreter [![MELPA](https://melpa.org/packages/with-shell-interpreter-badge.svg)](https://melpa.org/#/with-shell-interpreter) [![MELPA Stable](https://stable.melpa.org/packages/with-shell-interpreter-badge.svg)](https://stable.melpa.org/#/with-shell-interpreter)
 
 
-Helper for Emacs shell command APIs, making implict argument as explicit keyword arguments.
+Helper for Emacs shell command APIs, making implicit argument as explicit keyword arguments.
 
 This package is a library and does not provide any command.
 
@@ -27,16 +27,17 @@ Manually:
 
 ## Usage
 
-We recommand using the macro `with-shell-interpreter`. It's a more convenient version of `with-shell-interpreter-eval` that prevents having to quote _:form_ and wrap it in a `progn`.
+We recommend using the macro `with-shell-interpreter`. It's a more convenient version of `with-shell-interpreter-eval` that prevents having to quote _:form_ and wrap it in a `progn`.
 
 | keyword argument    | implicit var being let-bound                   | mandatory?         | description                                                                       |
 |---------------------|------------------------------------------------|--------------------|-----------------------------------------------------------------------------------|
-| _:form_             |                                                | :heavy_check_mark: | The s-expressions to eval.                                                        |
+| _:form_             | n/a                                            | :heavy_check_mark: | The s-expressions to eval.                                                        |
 | _:path_             | `default-directory`                            | :x:                | The path from which to eval.                                                      |
 | _:interpreter_      | `explicit-shell-file-name` / `shell-file-name` | :x:                | Name or absolute path of shell interpreter executable.                            |
 | _:interpreter-args_ | `explicit-INTEPRETER-args`                     | :x:                | Login args to call interpreter with for login.                                    |
 | _:command-switch_   | `shell-command-switch`                         | :x:                | Command switch arg for asking interpreter to run a shell command.                 |
 | _:w32-arg-quote_    | `w32-quote-process-args`                       | :x:                | Character to use for quoting shell arguments (only on the Windows build of Emacs) |
+| _:allow-local-vars_ | n/a                                            | :x:                | Whether to allow buffer-local and/or connection-local values                      |
 
 _:form_ is expected to contain calls to functions relying on the Emacs shell APIs (e.g. `shell`, `shell-command`, `async-shell-command` and `shell-command-to-string`).
 
@@ -46,15 +47,23 @@ _:interpreter-args_ is only usefull for interactive shells (from package shell-m
 
 _:command-switch_ is only usefull for single shell commands (from package simple).
 
+_:allow-local-vars_ can take the following values:
+
+ - _'buffer_: allow buffer-local vars values_
+ - _'connection_: allow connection-local values
+ - _'both_: allow both types of local values
+ - _'none_: ignore all local values
+
 If left empty, here are the default values being used:
 
-| keyword argument    | fallback value (local path)       | fallback value (remote path)                          |
-|---------------------|-----------------------------------|-------------------------------------------------------|
-| _:path_             | current `default-directory`       | current `default-directory`                           |
-| _:interpreter_      | `shell-file-name`                 | `with-shell-interpreter-default-remote`               |
-| _:interpreter-args_ | `explicit-INTEPRETER-args` if set | `with-shell-interpreter-default-remote-args`          |
-| _:command-switch_   | `shell-command-switch`            | `with-shell-interpreter-default-remote-command-swith` |
-| _:w32-arg-quote_    | `w32-quote-process-args`          | `w32-quote-process-args`                              |
+| keyword argument    | fallback value (local path)       | fallback value (remote path)                           |
+|---------------------|-----------------------------------|--------------------------------------------------------|
+| _:path_             | current `default-directory`       | current `default-directory`                            |
+| _:interpreter_      | `shell-file-name`                 | `with-shell-interpreter-default-remote`                |
+| _:interpreter-args_ | `explicit-INTEPRETER-args` if set | `with-shell-interpreter-default-remote-args`           |
+| _:command-switch_   | `shell-command-switch`            | `with-shell-interpreter-default-remote-command-switch` |
+| _:w32-arg-quote_    | `w32-quote-process-args`          | `w32-quote-process-args`                               |
+| _:allow-local-vars_ | _nil_                             | _'connection_                                          |
 
 
 #### Example
@@ -89,13 +98,13 @@ The package defines 3 variables for configuring the default interpreter for remo
 
  - `with-shell-interpreter-default-remote`: takes precedence over `shell-file-name`. Default value is `"/bin/bash"`.
  - `with-shell-interpreter-default-remote-args`: takes precedence over `explicit-INTEPRETER-args`. Default value is `'("-c" "export EMACS=; export TERM=dumb; stty echo; bash")`.
- - `with-shell-interpreter-default-remote-command-swith`: takes precedence over `shell-command-switch`. Default value is `-c`.
+ - `with-shell-interpreter-default-remote-command-switch`: takes precedence over `shell-command-switch`. Default value is `-c`.
 
 We want this behavior as the user might have redefined the value of `shell-file-name` with something exotic (e.g. zsh) and we would want a safer default for remote servers.
 
 Furthermore, under Microsoft Windows, `shell-file-name` defaults to _cmdproxy.exe_ which is OK for local shells but sucks for remote ones...
 
-These values can be overriden with keyword arguments _:interpreter_, _:interpreter-args_ and _:command-switch_ respectively.
+These values can be overridden with keyword arguments _:interpreter_, _:interpreter-args_ and _:command-switch_ respectively.
 
 Additionally, you might want to change the value of `tramp-default-user` if you usually connect to remote host with a user different than your local one.
 
@@ -106,4 +115,4 @@ This code uses form feeds (`^L` character) as separators.
 
 Package [form-feed](https://github.com/wasamasa/form-feed) makes them appear as intended.
 
-Package [lisp-extra-font-lock](https://github.com/Lindydancer/lisp-extra-font-lock) is also recommanded to distinguish between local and global vars in _let_ expressions.
+Package [lisp-extra-font-lock](https://github.com/Lindydancer/lisp-extra-font-lock) is also recommended to distinguish between local and global vars in _let_ expressions.

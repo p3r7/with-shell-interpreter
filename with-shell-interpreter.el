@@ -5,7 +5,7 @@
 ;; Version: 0.1.0
 ;; Keywords: processes, terminals
 ;; URL: https://github.com/p3r7/with-shell-interpreter
-;; Package-Requires: ((cl-lib "0.6.1"))
+;; Package-Requires: ((emacs "25.1")(cl-lib "0.6.1"))
 ;;
 ;; SPDX-License-Identifier: MIT
 
@@ -24,6 +24,7 @@
 
 (require 'cl-lib)
 
+(require 'files-x)
 (require 'shell)
 
 
@@ -34,15 +35,27 @@
   "For remote shells, default interpreter exec to fallback to if :interpreter \
 is not specified.
 Let-binds `explicit-shell-file-name' and `shell-file-name'.")
+
 (defvar with-shell-interpreter-default-remote-args '("-c" "export EMACS=; export TERM=dumb; stty echo; bash")
   "For remote shells, default interpreter args to fallback to if \
 :interpreter-args is not specified and :interpreter is equal to \
 `with-shell-interpreter-default-remote'.
 Let-binds `explicit-INTEPRETER-args'")
-(defvar with-shell-interpreter-default-remote-command-swith "-c"
+
+(defvar with-shell-interpreter-default-remote-command-switch "-c"
   "For remote shells, default interpreter command switch to fallback to if \
 :command-switch is not specified.
 Let-binds `shell-command-switch'")
+
+
+
+;; COMPATIBILITY
+
+;; NB: connection-local variables are only available since version 26.1
+(eval-when-compile
+  (if (fboundp 'hack-connection-local-variables)
+      (defalias 'with-shell-interpreter--hack-connection-local-variables #'hack-connection-local-variables)
+    (defalias 'with-shell-interpreter--hack-connection-local-variables (lambda (_c) nil))))
 
 ;; NB: only bound on Windows build of Emacs
 (unless (boundp 'w32-quote-process-args)
@@ -85,11 +98,18 @@ ARGS are in fact keywords, `with-shell-interpreter' being a macro wrapper around
 :w32-arg-quote      Only affecting Microsoft Windows build of Emacs.
                     Character to use for quoting arguments.
                     Let-binds `w32-quote-process-args'.
-:allow-local-vars   If t, allow local values to have precedence over global ones for:
+:allow-local-vars   Allow local values to have precedence over global ones
+                    for:
                      - `explicit-shell-file-name'
                      - `explicit-INTEPRETER-args'
                      - `shell-command-switch'
                      - `w32-quote-process-args'
+                    Value can be:
+                      - 'buffer: allow buffer-local vars values
+                      - 'connection: allow connection-local values
+                      - 'both: allow both types of local values
+                      - 'none: ignore all local values
+                    Default is 'connection.
 
 For more detailed instructions, have a look at https://github.com/p3r7/with-shell-interpreter/blob/master/README.md"
   (declare (indent 1) (debug t))
@@ -119,21 +139,35 @@ For more detailed instructions, have a look at https://github.com/p3r7/with-shel
             ;; Try to use the "current" lexical/dynamic mode for `form'.
             (eval `(lambda () ,form) lexical-binding)))
          (is-remote (file-remote-p path))
-         (ignore-local-vars (not allow-local-vars))
-         (interpreter (with-shell-interpreter--get-interpreter-value is-remote ignore-local-vars interpreter))
+         (allow-local-vars (or allow-local-vars 'connection))
+         (ignore-buffer-local-vars (not (member allow-local-vars '(buffer both))))
+         (ignore-cnnx-local-vars (not (member allow-local-vars '(connection both))))
+         (cnnx-local-vars (with-shell-interpreter--get-cnnx-local-vars path))
+         (interpreter (with-shell-interpreter--get-interpreter-value is-remote ignore-buffer-local-vars
+                                                                     ignore-cnnx-local-vars cnnx-local-vars
+                                                                     interpreter))
          (interpreter-name (with-shell-interpreter--get-interpreter-name interpreter))
          (explicit-interpreter-args-var (intern (concat "explicit-" interpreter-name "-args")))
          (interpreter-args (with-shell-interpreter--get-interpreter-args-value is-remote explicit-interpreter-args-var
                                                                                interpreter
-                                                                               ignore-local-vars interpreter-args))
-         (command-switch (with-shell-interpreter--get-command-switch is-remote ignore-local-vars command-switch))
+                                                                               ignore-buffer-local-vars
+                                                                               ignore-cnnx-local-vars cnnx-local-vars
+                                                                               interpreter-args))
+         (command-switch (with-shell-interpreter--get-command-switch is-remote interpreter
+                                                                     ignore-buffer-local-vars
+                                                                     ignore-cnnx-local-vars cnnx-local-vars
+                                                                     command-switch))
          ;; bellow are vars acting as implicit options to shell functions
          (default-directory path)
          (shell-file-name interpreter)
          (explicit-shell-file-name interpreter)
          (shell-command-switch command-switch)
+         (enable-connection-local-variables nil) ; disable lookup of connection-local vars in :form
          ;; NB: w32-only feature
-         (w32-quote-process-args (with-shell-interpreter--get-w32-quote-process-args ignore-local-vars w32-arg-quote)))
+         (w32-quote-process-args (with-shell-interpreter--get-w32-quote-process-args is-remote interpreter
+                                                                                     ignore-buffer-local-vars
+                                                                                     ignore-cnnx-local-vars cnnx-local-vars
+                                                                                     w32-arg-quote)))
     (cl-progv
         (list explicit-interpreter-args-var)
         (list interpreter-args)
@@ -173,64 +207,193 @@ Like `plist-get' except allows value to be multiple elements."
              do (setq passed 't))))
 
 
-(defun with-shell-interpreter--symbol-value (sym &optional ignore-local)
+(defun with-shell-interpreter--symbol-value (sym &optional ignore-buffer-local)
   "Return the value of SYM in current buffer.
-If IGNORE-LOCAL is nil, returns global value."
-  (if ignore-local
+If IGNORE-BUFFER-LOCAL is nil, always return global value (never buffer-local one)."
+  (if ignore-buffer-local
       ;; NB: if local-only `default-value' throws an error
       (ignore-errors
         (default-value sym))
     (symbol-value sym)))
 
 
-(defun with-shell-interpreter--get-interpreter-value (is-remote &optional ignore-local-vars input-value)
+(defun with-shell-interpreter--boundp-buffer-local (symbol)
+  "Return t if SYMBOL has a buffer-local value.
+Even works if it's value is nil."
+  (assoc symbol (buffer-local-variables)))
+
+
+(defun with-shell-interpreter--get-cnnx-local-vars (path)
+  "Get connection-local-vars for PATH."
+  (when (file-remote-p path)
+    (let (output)
+      (with-temp-buffer
+        (with-shell-interpreter--hack-connection-local-variables
+         `(
+           ;; REVIEW: only those props in criteria?
+           ;; this is what `shell' uses, but maybe can we do better?
+           :application tramp
+           :protocol ,(file-remote-p path 'method)
+           :user ,(file-remote-p path 'user)
+           :machine ,(file-remote-p path 'host)))
+        (setq output connection-local-variables-alist))
+      output)))
+
+
+(defun with-shell-interpreter--get-interpreter-value (is-remote
+                                                      &optional ignore-buffer-local-vars
+                                                      ignore-cnnx-local-vars cnnx-local-vars
+                                                      input-value)
   "Determine value of shell interpreter.
-Uses INPUT-VALUE if not empty, else fallbacks to default values, depending on
-whether:
+Use INPUT-VALUE if not empty, else fallback to default values, depending on
+CNNX-LOCAL-VARS and whether:
  - IS-REMOTE or not
- - IGNORE-LOCAL-VARS or not"
+ - IGNORE-BUFFER-LOCAL-VARS or not
+ - IGNORE-CNNX-LOCAL-VARS or not
+
+The order of precedence is like so:
+ - input value
+ - buffer-local value (if IGNORE-BUFFER-LOCAL-VARS is false)
+ - connection-local value (if IGNORE-CNNX-LOCAL-VARS is false)
+ - default remote value
+ - global value"
   (with-shell-interpreter--normalize-path
    (or input-value
-       (if is-remote
-           with-shell-interpreter-default-remote
-         (or (with-shell-interpreter--symbol-value 'shell-file-name ignore-local-vars)
-             (with-shell-interpreter--symbol-value 'explicit-shell-file-name ignore-local-vars))))))
+       ;; buffer-local value
+       (when (and (not ignore-buffer-local-vars)
+                  (with-shell-interpreter--boundp-buffer-local 'explicit-shell-file-name))
+         (with-shell-interpreter--symbol-value 'explicit-shell-file-name nil))
+       (when (and (not ignore-buffer-local-vars)
+                  (with-shell-interpreter--boundp-buffer-local 'shell-file-name))
+         (with-shell-interpreter--symbol-value 'shell-file-name nil))
+       ;; connection-local value
+       (when (and is-remote
+                  (not ignore-cnnx-local-vars))
+         (or (alist-get 'explicit-shell-file-name cnnx-local-vars)
+             (alist-get 'shell-file-name cnnx-local-vars)))
+       ;; default remote interpreter value
+       (when is-remote
+         with-shell-interpreter-default-remote)
+       ;; global value
+       (ignore-errors
+         (with-shell-interpreter--symbol-value 'explicit-shell-file-name ignore-buffer-local-vars))
+       (ignore-errors
+         (with-shell-interpreter--symbol-value 'shell-file-name ignore-buffer-local-vars)))))
 
 
-(defun with-shell-interpreter--get-interpreter-args-value (is-remote args-var-name interpreter &optional ignore-local-vars input-value)
+(defun with-shell-interpreter--get-interpreter-args-value (is-remote args-var-name interpreter
+                                                                     &optional ignore-buffer-local-vars
+                                                                     ignore-cnnx-local-vars cnnx-local-vars
+                                                                     input-value)
   "Determine value of shell interpreter.
-Uses INPUT-VALUE if not empty, else fallbacks to default values, depending on
-ARGS-VAR-NAME, INTERPRETER and whether:
+Use INPUT-VALUE if not empty, else fallback to default values, depending on
+ ARGS-VAR-NAME, INTERPRETER, CNNX-LOCAL-VARS and whether:
  - IS-REMOTE or not
- - IGNORE-LOCAL-VARS or not"
+ - IGNORE-BUFFER-LOCAL-VARS or not
+ - IGNORE-CNNX-LOCAL-VARS or not
+
+The order of precedence is like so:
+ - input value
+ - buffer-local value (if IGNORE-BUFFER-LOCAL-VARS is false)
+ - connection-local value (if IGNORE-CNNX-LOCAL-VARS is false)
+ - default remote value (if INTERPRETER is default remote interpreter)
+ - global value
+ - universal fallback value"
   (or input-value
+      ;; buffer-local value
+      (when (and (not ignore-buffer-local-vars)
+                 (with-shell-interpreter--boundp-buffer-local args-var-name))
+        (with-shell-interpreter--symbol-value args-var-name nil))
+      ;; connection-local value
+      (when (and is-remote
+                 (not ignore-cnnx-local-vars)
+                 (or
+                  (string= interpreter (assoc 'explicit-shell-file-name cnnx-local-vars))
+                  (string= interpreter (assoc 'shell-file-name cnnx-local-vars))))
+        (alist-get args-var-name cnnx-local-vars))
+      ;; default remote interpreter value
       (when (and is-remote
                  (string= interpreter with-shell-interpreter-default-remote))
         with-shell-interpreter-default-remote-args)
-      (when (boundp args-var-name)
-        (with-shell-interpreter--symbol-value args-var-name ignore-local-vars))))
+      ;; global value
+      (ignore-errors
+        (with-shell-interpreter--symbol-value args-var-name t))
+      ;; universal fallback value
+      '("-i")))
 
 
-(defun with-shell-interpreter--get-command-switch (is-remote &optional ignore-local-vars input-value)
+(defun with-shell-interpreter--get-command-switch (is-remote interpreter
+                                                             &optional ignore-buffer-local-vars
+                                                             ignore-cnnx-local-vars cnnx-local-vars
+                                                             input-value)
   "Determine value of shell command switch.
-Uses INPUT-VALUE if not empty, else fallbacks to default values, depending on
- whether:
+Use INPUT-VALUE if not empty, else fallback to default values, depending on
+ INTERPRETER, CNNX-LOCAL-VARS and whether:
  - IS-REMOTE or not
- - IGNORE-LOCAL-VARS or not"
+ - IGNORE-BUFFER-LOCAL-VARS or not
+ - IGNORE-CNNX-LOCAL-VARS or not
+
+The order of precedence is like so:
+ - input value
+ - buffer-local value (if IGNORE-BUFFER-LOCAL-VARS is false)
+ - connection-local value (if IGNORE-CNNX-LOCAL-VARS is false)
+ - default remote value (if INTERPRETER is default remote interpreter)
+ - global value
+ - universal fallback value"
   (or input-value
-      (if is-remote
-          with-shell-interpreter-default-remote-command-swith
-        (with-shell-interpreter--symbol-value 'shell-command-switch ignore-local-vars))))
+      ;; buffer-local value
+      (when (and (not ignore-buffer-local-vars)
+                 (with-shell-interpreter--boundp-buffer-local 'shell-command-switch))
+        (with-shell-interpreter--symbol-value 'shell-command-switch nil))
+      ;; connection-local value
+      (when (and is-remote
+                 (not ignore-cnnx-local-vars)
+                 (or
+                  (string= interpreter (assoc 'explicit-shell-file-name cnnx-local-vars))
+                  (string= interpreter (assoc 'shell-file-name cnnx-local-vars))))
+        (alist-get 'shell-command-switch cnnx-local-vars))
+      ;; default remote interpreter value
+      (when (and is-remote
+                 (string= interpreter with-shell-interpreter-default-remote))
+        with-shell-interpreter-default-remote-command-switch)
+      ;; global value
+      (ignore-errors
+        (with-shell-interpreter--symbol-value 'shell-command-switch t))
+      ;; universal fallback value
+      "-c"))
 
 
-(defun with-shell-interpreter--get-w32-quote-process-args (&optional ignore-local-vars input-value)
+(defun with-shell-interpreter--get-w32-quote-process-args (is-remote interpreter
+                                                                     &optional ignore-buffer-local-vars
+                                                                     ignore-cnnx-local-vars cnnx-local-vars
+                                                                     input-value)
   "Determine value of shell command switch.
-Uses INPUT-VALUE if not empty, else fallbacks to default values, depending on
-whether:
- - IGNORE-LOCAL-VARS or not"
+Use INPUT-VALUE if not empty, else fallback to default values, depending on
+ INTERPRETER, CNNX-LOCAL-VARS and whether:
+ - IS-REMOTE or not
+ - IGNORE-BUFFER-LOCAL-VARS or not
+ - IGNORE-CNNX-LOCAL-VARS or not
+
+The order of precedence is like so:
+ - input value
+ - buffer-local value (if IGNORE-BUFFER-LOCAL-VARS is false)
+ - connection-local value (if IGNORE-CNNX-LOCAL-VARS is false)
+ - global value"
   (or input-value
-      (when (boundp 'w32-quote-process-args)
-        (with-shell-interpreter--symbol-value 'w32-quote-process-args ignore-local-vars))))
+      ;; buffer-local value
+      (when (and (not ignore-buffer-local-vars)
+                 (with-shell-interpreter--boundp-buffer-local 'w32-quote-process-args))
+        (with-shell-interpreter--symbol-value 'w32-quote-process-args nil))
+      ;; connection-local value
+      (when (and is-remote
+                 (not ignore-cnnx-local-vars)
+                 (or
+                  (string= interpreter (assoc 'explicit-shell-file-name cnnx-local-vars))
+                  (string= interpreter (assoc 'shell-file-name cnnx-local-vars))))
+        (alist-get 'shell-command-switch cnnx-local-vars))
+      ;; global value
+      (ignore-errors
+        (with-shell-interpreter--symbol-value 'w32-quote-process-args ignore-buffer-local-vars))))
 
 
 

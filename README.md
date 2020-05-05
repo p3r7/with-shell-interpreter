@@ -68,7 +68,7 @@ If left empty, here are the default values being used:
 | _:allow-local-vars_ | _nil_                             | _'connection_                                          |
 
 
-#### Example
+## Examples
 
 Getting the temperature from a Raspberry Pi:
 
@@ -91,7 +91,7 @@ Under Microsoft Windows, launching an interactive shell with the git-bash interp
         (shell)))
 ```
 
-For more practical examples, have a look at packages in [friendly-shell](https://github.com/p3r7/friendly-shell) ([examples](https://github.com/p3r7/friendly-shell/blob/master/examples.md)).
+For more practical examples, have a look at packages [friendly-shell-command](https://github.com/p3r7/friendly-shell) and [friendly-shell](https://github.com/p3r7/friendly-shell) ([examples](https://github.com/p3r7/friendly-shell/blob/master/examples.md)).
 
 
 ## Configuration

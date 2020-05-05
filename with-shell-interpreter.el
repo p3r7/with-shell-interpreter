@@ -91,7 +91,7 @@ ARGS are in fact keywords, `with-shell-interpreter' being a macro wrapper around
                     Let-binds `explicit-INTEPRETER-args'.
                     Useful only for interactive shells.
 :command-switch     Command switch arg for asking interpreter to run a
-                    shell command (e.g. \"-c\" in bourne shell and most
+                    shell command (e.g. \"-c\" in Bourne shell and most
                     derivatives).
                     Let-binds `shell-command-switch'.
                     Useful only for single shell commands.

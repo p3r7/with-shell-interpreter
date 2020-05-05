@@ -94,8 +94,8 @@
                  (with-shell-interpreter-default-remote (plist-get item :default-remote))
                  ;; local vars
                  (allow-local-vars (plist-get item :allow-local-vars))
-                 (ignore-buffer-local-vars (not (member allow-local-vars '(buffer both))))
-                 (ignore-cnnx-local-vars (not (member allow-local-vars '(connection both))))
+                 (allow-buffer-local-vars (member allow-local-vars '(buffer both)))
+                 (allow-cnnx-local-vars (member allow-local-vars '(connection both)))
                  (buffer-local-vars (plist-get item :buffer-local-vars))
                  (cnnx-local-vars (plist-get item :cnnx-local-vars))
                  ;; path
@@ -115,8 +115,8 @@
 
               (setq result (with-shell-interpreter--get-interpreter-value
                             (file-remote-p path)
-                            ignore-buffer-local-vars
-                            ignore-cnnx-local-vars cnnx-local-vars
+                            allow-buffer-local-vars
+                            allow-cnnx-local-vars cnnx-local-vars
                             interpreter))
 
               ;; NB: using eval/quote to get better output in ERT

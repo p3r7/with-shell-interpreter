@@ -113,7 +113,7 @@
                   (make-local-variable k)
                   (set k v)))
 
-              (setq result (with-shell-interpreter--get-interpreter-value
+              (setq result (with-shell-interpreter--interpreter-value
                             (file-remote-p path)
                             allow-buffer-local-vars
                             allow-cnnx-local-vars cnnx-local-vars

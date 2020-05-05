@@ -142,21 +142,21 @@ For more detailed instructions, have a look at https://github.com/p3r7/with-shel
          (allow-local-vars (or allow-local-vars 'connection)) ; default value
          (allow-buffer-local-vars (member allow-local-vars '(buffer both)))
          (allow-cnnx-local-vars (member allow-local-vars '(connection both)))
-         (cnnx-local-vars (with-shell-interpreter--get-cnnx-local-vars path))
-         (interpreter (with-shell-interpreter--get-interpreter-value is-remote allow-buffer-local-vars
-                                                                     allow-cnnx-local-vars cnnx-local-vars
-                                                                     interpreter))
-         (interpreter-name (with-shell-interpreter--get-interpreter-name interpreter))
+         (cnnx-local-vars (with-shell-interpreter--cnnx-local-vars path))
+         (interpreter (with-shell-interpreter--interpreter-value is-remote allow-buffer-local-vars
+                                                                 allow-cnnx-local-vars cnnx-local-vars
+                                                                 interpreter))
+         (interpreter-name (with-shell-interpreter--interpreter-name interpreter))
          (explicit-interpreter-args-var (intern (concat "explicit-" interpreter-name "-args")))
-         (interpreter-args (with-shell-interpreter--get-interpreter-args-value is-remote explicit-interpreter-args-var
-                                                                               interpreter
-                                                                               allow-buffer-local-vars
-                                                                               allow-cnnx-local-vars cnnx-local-vars
-                                                                               interpreter-args))
-         (command-switch (with-shell-interpreter--get-command-switch is-remote interpreter
-                                                                     allow-buffer-local-vars
-                                                                     allow-cnnx-local-vars cnnx-local-vars
-                                                                     command-switch))
+         (interpreter-args (with-shell-interpreter--interpreter-args-value is-remote explicit-interpreter-args-var
+                                                                           interpreter
+                                                                           allow-buffer-local-vars
+                                                                           allow-cnnx-local-vars cnnx-local-vars
+                                                                           interpreter-args))
+         (command-switch (with-shell-interpreter--command-switch is-remote interpreter
+                                                                 allow-buffer-local-vars
+                                                                 allow-cnnx-local-vars cnnx-local-vars
+                                                                 command-switch))
          ;; bellow are vars acting as implicit options to shell functions
          (default-directory path)
          (shell-file-name interpreter)
@@ -164,10 +164,10 @@ For more detailed instructions, have a look at https://github.com/p3r7/with-shel
          (shell-command-switch command-switch)
          (enable-connection-local-variables nil) ; disable lookup of connection-local vars in :form
          ;; NB: w32-only feature
-         (w32-quote-process-args (with-shell-interpreter--get-w32-quote-process-args is-remote interpreter
-                                                                                     allow-buffer-local-vars
-                                                                                     allow-cnnx-local-vars cnnx-local-vars
-                                                                                     w32-arg-quote)))
+         (w32-quote-process-args (with-shell-interpreter--w32-quote-process-args is-remote interpreter
+                                                                                 allow-buffer-local-vars
+                                                                                 allow-cnnx-local-vars cnnx-local-vars
+                                                                                 w32-arg-quote)))
     (cl-progv
         (list explicit-interpreter-args-var)
         (list interpreter-args)
@@ -175,7 +175,7 @@ For more detailed instructions, have a look at https://github.com/p3r7/with-shel
 
 
 
-;; PRIVATE HELPERS
+;; HELPERS: STRING NORMALIZATION
 
 (defun with-shell-interpreter--normalize-path (path)
   "Normalize PATH, converting \\ into /."
@@ -184,10 +184,13 @@ For more detailed instructions, have a look at https://github.com/p3r7/with-shel
   (subst-char-in-string ?\\ ?/ path))
 
 
-(defun with-shell-interpreter--get-interpreter-name (interpreter)
+(defun with-shell-interpreter--interpreter-name (interpreter)
   "Extracts INTERPRETER name, keeping extension."
   (file-name-nondirectory interpreter))
 
+
+
+;; HELPERS: ARG PARSING
 
 (defun with-shell-interpreter--plist-get (plist prop)
   "Extract value of property PROP from property list PLIST.
@@ -207,6 +210,9 @@ Like `plist-get' except allows value to be multiple elements."
              do (setq passed 't))))
 
 
+
+;; HELPERS: VARIABLES SCOPE
+
 (defun with-shell-interpreter--symbol-value (sym &optional allow-buffer-local)
   "Return the value of SYM in current buffer.
 If ALLOW-BUFFER-LOCAL is nil, always return global value (never buffer-local one)."
@@ -223,7 +229,7 @@ Even works if it's value is nil."
   (assoc symbol (buffer-local-variables)))
 
 
-(defun with-shell-interpreter--get-cnnx-local-vars (path)
+(defun with-shell-interpreter--cnnx-local-vars (path)
   "Get connection-local-vars for PATH."
   (when (file-remote-p path)
     (let (output)
@@ -240,10 +246,13 @@ Even works if it's value is nil."
       output)))
 
 
-(defun with-shell-interpreter--get-interpreter-value (is-remote
-                                                      &optional allow-buffer-local-vars
-                                                      allow-cnnx-local-vars cnnx-local-vars
-                                                      input-value)
+
+;; HELPERS: STANDARD SHELL VARS
+
+(defun with-shell-interpreter--interpreter-value (is-remote
+                                                  &optional allow-buffer-local-vars
+                                                  allow-cnnx-local-vars cnnx-local-vars
+                                                  input-value)
   "Determine value of shell interpreter.
 Use INPUT-VALUE if not empty, else fallback to default values, depending on
 CNNX-LOCAL-VARS and whether:
@@ -281,10 +290,10 @@ The order of precedence is like so:
          (with-shell-interpreter--symbol-value 'shell-file-name nil)))))
 
 
-(defun with-shell-interpreter--get-interpreter-args-value (is-remote args-var-name interpreter
-                                                                     &optional allow-buffer-local-vars
-                                                                     allow-cnnx-local-vars cnnx-local-vars
-                                                                     input-value)
+(defun with-shell-interpreter--interpreter-args-value (is-remote args-var-name interpreter
+                                                                 &optional allow-buffer-local-vars
+                                                                 allow-cnnx-local-vars cnnx-local-vars
+                                                                 input-value)
   "Determine value of shell interpreter.
 Use INPUT-VALUE if not empty, else fallback to default values, depending on
  ARGS-VAR-NAME, INTERPRETER, CNNX-LOCAL-VARS and whether:
@@ -322,10 +331,10 @@ The order of precedence is like so:
       '("-i")))
 
 
-(defun with-shell-interpreter--get-command-switch (is-remote interpreter
-                                                             &optional allow-buffer-local-vars
-                                                             allow-cnnx-local-vars cnnx-local-vars
-                                                             input-value)
+(defun with-shell-interpreter--command-switch (is-remote interpreter
+                                                         &optional allow-buffer-local-vars
+                                                         allow-cnnx-local-vars cnnx-local-vars
+                                                         input-value)
   "Determine value of shell command switch.
 Use INPUT-VALUE if not empty, else fallback to default values, depending on
  INTERPRETER, CNNX-LOCAL-VARS and whether:
@@ -363,10 +372,10 @@ The order of precedence is like so:
       "-c"))
 
 
-(defun with-shell-interpreter--get-w32-quote-process-args (is-remote interpreter
-                                                                     &optional allow-buffer-local-vars
-                                                                     allow-cnnx-local-vars cnnx-local-vars
-                                                                     input-value)
+(defun with-shell-interpreter--w32-quote-process-args (is-remote interpreter
+                                                                 &optional allow-buffer-local-vars
+                                                                 allow-cnnx-local-vars cnnx-local-vars
+                                                                 input-value)
   "Determine value of shell command switch.
 Use INPUT-VALUE if not empty, else fallback to default values, depending on
  INTERPRETER, CNNX-LOCAL-VARS and whether:

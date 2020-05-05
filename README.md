@@ -7,6 +7,8 @@ This package is a library and does not provide any command.
 
 It is inspired by the `eval-after-load` / `with-eval-after-load` functions.
 
+It does the heavy lifting behind packages [friendly-shell-command](https://github.com/p3r7/friendly-shell) and [friendly-shell](https://github.com/p3r7/friendly-shell).
+
 For more context, read the [accompanying blog post](https://www.eigenbahn.com/2020/01/19/painless-emacs-shell-commands).
 
 

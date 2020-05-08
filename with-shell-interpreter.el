@@ -57,6 +57,10 @@ Let-binds `shell-command-switch'")
       (defalias 'with-shell-interpreter--hack-connection-local-variables #'hack-connection-local-variables)
     (defalias 'with-shell-interpreter--hack-connection-local-variables (lambda (_c) nil))))
 
+(if (fboundp 'hack-connection-local-variables)
+    (defalias 'with-shell-interpreter--hack-connection-local-variables #'hack-connection-local-variables)
+  (defalias 'with-shell-interpreter--hack-connection-local-variables (lambda (_c) nil)))
+
 ;; NB: only bound on Windows build of Emacs
 (unless (boundp 'w32-quote-process-args)
   ;; tame lexical binding warnings

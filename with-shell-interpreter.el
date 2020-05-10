@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2019-2020 Jordan Besly
 ;;
-;; Version: 0.1.0
+;; Version: 0.2.2
 ;; Keywords: processes, terminals
 ;; URL: https://github.com/p3r7/with-shell-interpreter
 ;; Package-Requires: ((emacs "25.1")(cl-lib "0.6.1"))

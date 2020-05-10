@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2019-2020 Jordan Besly
 ;;
-;; Version: 0.2.2
+;; Version: 0.3.0
 ;; Keywords: processes, terminals
 ;; URL: https://github.com/p3r7/with-shell-interpreter
 ;; Package-Requires: ((emacs "25.1")(cl-lib "0.6.1"))
@@ -31,21 +31,40 @@
 
 ;; VARS
 
-(defvar with-shell-interpreter-default-remote "/bin/bash"
-  "For remote shells, default interpreter exec to fallback to if :interpreter \
-is not specified.
-Let-binds `explicit-shell-file-name' and `shell-file-name'.")
+(defvar with-shell-interpreter-connection-local-vars-implem
+  'custom
+  "Implementation of connection-local vars to use.
+Possible values:
+ - 'custom: with-shell-interpreter's implementation
+ - 'native: native Emacs (>= 26.1) implementation
 
-(defvar with-shell-interpreter-default-remote-args '("-c" "export EMACS=; export TERM=dumb; stty echo; bash")
-  "For remote shells, default interpreter args to fallback to if \
-:interpreter-args is not specified and :interpreter is equal to \
-`with-shell-interpreter-default-remote'.
-Let-binds `explicit-INTEPRETER-args'")
+When 'custom, configure var
+`with-shell-interpreter-connection-local-vars'.
 
-(defvar with-shell-interpreter-default-remote-command-switch "-c"
-  "For remote shells, default interpreter command switch to fallback to if \
-:command-switch is not specified.
-Let-binds `shell-command-switch'")
+When 'native, configure vars `connection-local-profile-alist' and
+`connection-local-criteria-alist' with helper functions
+`connection-local-set-profile-variables' and
+`connection-local-set-profiles'.")
+
+(defvar with-shell-interpreter-connection-local-vars
+  '((".*" . ((explicit-shell-file-name . "/bin/bash")
+             (explicit-bash-args . ("-c" "export EMACS=; export TERM=dumb; stty echo; bash"))
+             (shell-command-switch . "-c"))))
+  "Alist mapping connection path regexp to variable lists.
+It aims at providing a more flexible implementation of
+connection-local variables.
+
+Order of entries matter, only first matched variables are used.
+Use `add-to-list' to add entries.
+
+It only get interpreted for remote connections.
+For local connections, customize defautl values of vars:
+ - `explicit-shell-file-name' / `shell-file-name'
+ - `explicit-INTEPRETER-args'
+ - `shell-command-switch'
+
+To read more about the standard connection-local variables see
+`with-shell-interpreter-connection-local-vars-implem'.")
 
 
 
@@ -194,7 +213,7 @@ For more detailed instructions, have a look at https://github.com/p3r7/with-shel
 
 
 
-;; HELPERS: ARG PARSING
+;; HELPERS: STRUCTURES
 
 (defun with-shell-interpreter--plist-get (plist prop)
   "Extract value of property PROP from property list PLIST.
@@ -212,6 +231,14 @@ Like `plist-get' except allows value to be multiple elements."
                           (keywordp e)
                           (eq e prop))
              do (setq passed 't))))
+
+(defun with-shell-interpreter--some (fn list)
+  "Return (FN x) for the first LIST item where (FN x) is non-nil."
+  (let (res)
+    (while (not res)
+      (setq res (funcall fn (car list))
+            list (cdr list)))
+    res))
 
 
 
@@ -233,8 +260,28 @@ Even works if it's value is nil."
   (assoc symbol (buffer-local-variables)))
 
 
+
+;; HELPERS: CONNECTION-LOCAL VARS
+
 (defun with-shell-interpreter--cnnx-local-vars (path)
-  "Get connection-local-vars for PATH."
+  "Get connection-local vars for PATH."
+  (if (eq with-shell-interpreter-connection-local-vars-implem 'custom)
+      (with-shell-interpreter--cnnx-local-vars-custom path)
+    (with-shell-interpreter--cnnx-local-vars-native path)))
+
+(defun with-shell-interpreter--cnnx-local-vars-custom (path)
+  "Get connection-local vars for PATH (custom)."
+  (when (file-remote-p path)
+    (with-shell-interpreter--some
+     (lambda (e)
+       (let ((regexp (car e))
+             (vars (cdr e)))
+         (when (string-match regexp path)
+           vars)))
+     with-shell-interpreter-connection-local-vars)))
+
+(defun with-shell-interpreter--cnnx-local-vars-native (path)
+  "Get connection-local vars for PATH (native)."
   (when (file-remote-p path)
     (let (output)
       (with-temp-buffer
@@ -284,14 +331,13 @@ The order of precedence is like so:
                   allow-cnnx-local-vars)
          (or (alist-get 'explicit-shell-file-name cnnx-local-vars)
              (alist-get 'shell-file-name cnnx-local-vars)))
-       ;; default remote interpreter value
-       (when is-remote
-         with-shell-interpreter-default-remote)
        ;; global value
        (ignore-errors
          (with-shell-interpreter--symbol-value 'explicit-shell-file-name nil))
        (ignore-errors
-         (with-shell-interpreter--symbol-value 'shell-file-name nil)))))
+         (with-shell-interpreter--symbol-value 'shell-file-name nil))
+       ;; universal fallback value
+       "/usr/bin/sh")))
 
 
 (defun with-shell-interpreter--interpreter-args-value (is-remote args-var-name interpreter
@@ -324,10 +370,6 @@ The order of precedence is like so:
                   (string= interpreter (assoc 'explicit-shell-file-name cnnx-local-vars))
                   (string= interpreter (assoc 'shell-file-name cnnx-local-vars))))
         (alist-get args-var-name cnnx-local-vars))
-      ;; default remote interpreter value
-      (when (and is-remote
-                 (string= interpreter with-shell-interpreter-default-remote))
-        with-shell-interpreter-default-remote-args)
       ;; global value
       (ignore-errors
         (with-shell-interpreter--symbol-value args-var-name nil))
@@ -365,10 +407,6 @@ The order of precedence is like so:
                   (string= interpreter (assoc 'explicit-shell-file-name cnnx-local-vars))
                   (string= interpreter (assoc 'shell-file-name cnnx-local-vars))))
         (alist-get 'shell-command-switch cnnx-local-vars))
-      ;; default remote interpreter value
-      (when (and is-remote
-                 (string= interpreter with-shell-interpreter-default-remote))
-        with-shell-interpreter-default-remote-command-switch)
       ;; global value
       (ignore-errors
         (with-shell-interpreter--symbol-value 'shell-command-switch nil))

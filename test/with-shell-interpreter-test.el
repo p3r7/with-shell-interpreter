@@ -42,23 +42,10 @@
              :interpreter "/bin/input")
      :expected (
                 :interpreter "/bin/input"))
-    ;; INPUT > DEFAULT REMOTE
-    (
-     :case "INPUT > DEFAULT REMOTE"
-     :allow-local-vars none
-     :default-remote "/bin/default-remote"
-     :buffer-local-vars ((explicit-shell-file-name . "/bin/buffer"))
-     :cnnx-local-vars ()
-     :input (
-             :path "/ssh:pi@raspberry:/home/pi"
-             :interpreter "/bin/input")
-     :expected (
-                :interpreter "/bin/input"))
     ;; BUFFER > CNNX
     (
-     :case "BUFFER > CNNX > DEFAULT-REMOTE"
+     :case "BUFFER > CNNX"
      :allow-local-vars both
-     :default-remote "/bin/default-remote"
      :buffer-local-vars ((explicit-shell-file-name . "/bin/buffer"))
      :cnnx-local-vars ((explicit-shell-file-name . "/bin/cnnx"))
      :input (
@@ -66,18 +53,6 @@
              :interpreter nil)
      :expected (
                 :interpreter "/bin/buffer"))
-    ;; DEFAULT REMOTE INTERPRETER
-    (
-     :case "DEFAULT REMOTE INTERPRETER"
-     :allow-local-vars none
-     :default-remote "/bin/default-remote"
-     :buffer-local-vars ((explicit-shell-file-name . "/bin/buffer"))
-     :cnnx-local-vars ((explicit-shell-file-name . "/bin/cnnx"))
-     :input (
-             :path "/ssh:pi@raspberry:/home/pi"
-             :interpreter nil)
-     :expected (
-                :interpreter "/bin/default-remote"))
     )
   "List test cases.")
 
@@ -90,8 +65,6 @@
   "Ensure proper interpreter value."
   (mapc (lambda (item)
           (let* ((t-case (plist-get item :case))
-                 ;; config
-                 (with-shell-interpreter-default-remote (plist-get item :default-remote))
                  ;; local vars
                  (allow-local-vars (plist-get item :allow-local-vars))
                  (allow-buffer-local-vars (member allow-local-vars '(buffer both)))

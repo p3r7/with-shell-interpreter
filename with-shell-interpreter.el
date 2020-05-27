@@ -367,8 +367,8 @@ The order of precedence is like so:
       (when (and is-remote
                  allow-cnnx-local-vars
                  (or
-                  (string= interpreter (assoc 'explicit-shell-file-name cnnx-local-vars))
-                  (string= interpreter (assoc 'shell-file-name cnnx-local-vars))))
+                  (string= interpreter (alist-get 'explicit-shell-file-name cnnx-local-vars))
+                  (string= interpreter (alist-get 'shell-file-name cnnx-local-vars))))
         (alist-get args-var-name cnnx-local-vars))
       ;; global value
       (ignore-errors
@@ -404,8 +404,8 @@ The order of precedence is like so:
       (when (and is-remote
                  allow-cnnx-local-vars
                  (or
-                  (string= interpreter (assoc 'explicit-shell-file-name cnnx-local-vars))
-                  (string= interpreter (assoc 'shell-file-name cnnx-local-vars))))
+                  (string= interpreter (alist-get 'explicit-shell-file-name cnnx-local-vars))
+                  (string= interpreter (alist-get 'shell-file-name cnnx-local-vars))))
         (alist-get 'shell-command-switch cnnx-local-vars))
       ;; global value
       (ignore-errors
@@ -439,8 +439,8 @@ The order of precedence is like so:
       (when (and is-remote
                  allow-cnnx-local-vars
                  (or
-                  (string= interpreter (assoc 'explicit-shell-file-name cnnx-local-vars))
-                  (string= interpreter (assoc 'shell-file-name cnnx-local-vars))))
+                  (string= interpreter (alist-get 'explicit-shell-file-name cnnx-local-vars))
+                  (string= interpreter (alist-get 'shell-file-name cnnx-local-vars))))
         (alist-get 'shell-command-switch cnnx-local-vars))
       ;; global value
       (ignore-errors

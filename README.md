@@ -84,11 +84,11 @@ Under Microsoft Windows, launching an interactive shell with the git-bash interp
 
 ```el
 (with-shell-interpreter
-   :path "~"                            ; ensure local path
-   :interpreter "C:/Program Files/Git/bin/bash.exe"
-   :form
-   (let (current-prefix-arg '(4))       ; don't prompt user for interpreter
-        (shell)))
+  :path "~"                            ; ensure local path
+  :interpreter "C:/Program Files/Git/bin/bash.exe"
+  :form
+  (let (current-prefix-arg '(4))       ; don't prompt user for interpreter
+    (shell)))
 ```
 
 For more practical examples, have a look at packages [friendly-shell-command](https://github.com/p3r7/friendly-shell) and [friendly-shell](https://github.com/p3r7/friendly-shell) ([examples](https://github.com/p3r7/friendly-shell/blob/master/examples.md)).
@@ -96,19 +96,46 @@ For more practical examples, have a look at packages [friendly-shell-command](ht
 
 ## Configuration
 
-The package defines 3 variables for configuring the default interpreter for remote connections:
+### Per connection default configuration
 
- - `with-shell-interpreter-default-remote`: takes precedence over `shell-file-name`. Default value is `"/bin/bash"`.
- - `with-shell-interpreter-default-remote-args`: takes precedence over `explicit-INTEPRETER-args`. Default value is `'("-c" "export EMACS=; export TERM=dumb; stty echo; bash")`.
- - `with-shell-interpreter-default-remote-command-switch`: takes precedence over `shell-command-switch`. Default value is `-c`.
-
-We want this behavior as the user might have redefined the value of `shell-file-name` with something exotic (e.g. zsh) and we would want a safer default for remote servers.
+We generally want to have different values for remote connection as the user might have redefined the value of `shell-file-name` with something exotic (e.g. zsh) and we would want a safer default for remote servers.
 
 Furthermore, under Microsoft Windows, `shell-file-name` defaults to _cmdproxy.exe_ which is OK for local shells but sucks for remote ones...
 
-These values can be overridden with keyword arguments _:interpreter_, _:interpreter-args_ and _:command-switch_ respectively.
+We can of course use the _:interpreter_, _:interpreter-args_ and _:command-switch_ keyword parameters but it's cumbersome to define a function for each remote connection with a custom configuration.
 
-Additionally, you might want to change the value of `tramp-default-user` if you usually connect to remote host with a user different than your local one.
+Instead, the preferred way is to rely on connection-local variables.
+
+`with-shell-interpreter` comes by default with its own custom implementation of connection-local variables. It can be configured with var `with-shell-interpreter-connection-local-vars`.
+
+It comes with a fallback entry for default configuration of remote interpreters:
+
+```el
+'((".*" . ((explicit-shell-file-name . "/bin/bash")
+           (explicit-bash-args . ("-c" "export EMACS=; export TERM=dumb; stty echo; bash"))
+           (shell-command-switch . "-c"))))
+```
+
+To add an entry, just:
+
+```el
+(add-to-list with-shell-interpreter-connection-local-vars '(".*@openwrt") . ((explicit-shell-file-name . "/bin/ash")
+                                                                             (explicit-bash-args . ("-i"))
+                                                                             (shell-command-switch . "-c")))
+```
+
+Alternatively, you can instead choose to use Emacs' native implementation (more restrictive and cumbersome to configure):
+
+```el
+(setq with-shell-interpreter-connection-local-vars-implem 'native')
+```
+
+The native implementation is only available since Emacs 26.1. Read docstrings of `connection-local-set-profiles` and `connection-local-set-profile-variables` for more details about it.
+
+
+### Default remote user
+
+You might want to change the value of `tramp-default-user` if you usually connect to remote host with a user different than your local one.
 
 
 ## Legibility

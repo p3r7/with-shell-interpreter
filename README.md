@@ -127,7 +127,7 @@ To add an entry, just:
 Alternatively, you can instead choose to use Emacs' native implementation (more restrictive and cumbersome to configure):
 
 ```el
-(setq with-shell-interpreter-connection-local-vars-implem 'native')
+(setq with-shell-interpreter-connection-local-vars-implem 'native)
 ```
 
 The native implementation is only available since Emacs 26.1. Read docstrings of `connection-local-set-profiles` and `connection-local-set-profile-variables` for more details about it.

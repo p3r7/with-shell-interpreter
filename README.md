@@ -142,6 +142,6 @@ You might want to change the value of `tramp-default-user` if you usually connec
 
 This code uses form feeds (`^L` character) as separators.
 
-Package [form-feed](https://github.com/wasamasa/form-feed) makes them appear as intended.
+Either package [form-feed](https://github.com/wasamasa/form-feed) or [page-break-lines](https://github.com/purcell/page-break-lines) makes them appear as intended.
 
 Package [lisp-extra-font-lock](https://github.com/Lindydancer/lisp-extra-font-lock) is also recommended to distinguish between local and global vars in _let_ expressions.

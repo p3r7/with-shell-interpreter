@@ -83,7 +83,7 @@ To read more about the standard connection-local variables see
 ;; NB: only bound on Windows build of Emacs
 (unless (boundp 'w32-quote-process-args)
   ;; tame lexical binding warnings
-  (defvar w32-quote-process-args))
+  (defvar w32-quote-process-args nil))
 
 
 

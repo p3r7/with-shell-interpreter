@@ -71,14 +71,10 @@ To read more about the standard connection-local variables see
 ;; COMPATIBILITY
 
 ;; NB: connection-local variables are only available since version 26.1
-(eval-when-compile
+(eval-and-compile
   (if (fboundp 'hack-connection-local-variables)
       (defalias 'with-shell-interpreter--hack-connection-local-variables #'hack-connection-local-variables)
     (defalias 'with-shell-interpreter--hack-connection-local-variables (lambda (_c) nil))))
-
-(if (fboundp 'hack-connection-local-variables)
-    (defalias 'with-shell-interpreter--hack-connection-local-variables #'hack-connection-local-variables)
-  (defalias 'with-shell-interpreter--hack-connection-local-variables (lambda (_c) nil)))
 
 ;; NB: only bound on Windows build of Emacs
 (unless (boundp 'w32-quote-process-args)
